@@ -1,0 +1,14 @@
+{
+  "name": "PHP Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "xdebug.php-debug",
+        "bmewburn.vscode-intelephense-client"
+      ]
+    }
+  }
+}
