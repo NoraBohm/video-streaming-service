@@ -10,10 +10,6 @@ function check_password($password, $user_data) {
     }
 }
 
-function wrong_provided_data() {
-    throw_error("Username, eMail or password is incorrect");
-}
-
 $username_or_email = $_POST["username-or-email"];
 $password = $_POST["password"];
 
@@ -27,11 +23,7 @@ if ($username_or_email && $password) {
 
     $has_email = is_email($username_or_email);
 
-    if($has_email) {
-        $user_data = get_from_where_is_type($db, "video_users", "email", $username_or_email, "s");
-    } else {
-        $user_data = get_from_where_is_type($db, "video_users", "username", $username_or_email, "s");
-    }
+    $user_data = account_data_input($db, $has_email, $username_or_email);
     
     if (data_exists($user_data)) {
         $success = check_password($password, $user_data);
@@ -39,7 +31,7 @@ if ($username_or_email && $password) {
         wrong_provided_data();
     }
 } else {
-    throw_error("A data field was left empty");
+    data_field_left_empty();
 }
 
 if ($success) {
