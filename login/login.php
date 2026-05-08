@@ -15,8 +15,11 @@ $password = $_POST["password"];
 
 $success = false;
 
-require_once __DIR__ . '/functions.php';
-require_once __DIR__ . '/account_functions.php';
+//require_once __DIR__ . '/functions.php';
+//require_once __DIR__ . '/account_functions.php';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/account_functions.php';
 
 if ($username_or_email && $password) {
     $db = get_database();

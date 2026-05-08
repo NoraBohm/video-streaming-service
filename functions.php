@@ -7,7 +7,7 @@ function load_dotenv() {
     $dotenv->load();
 }
 
-function get_database() {
+function get_database_direct() {
     // Connect to database
     $mysqli = new mysqli(
         'ostrawebb.se', 
@@ -17,6 +17,11 @@ function get_database() {
     );
     $mysqli->set_charset('utf8');
     return $mysqli;
+}
+
+function get_database() {
+    load_dotenv();
+    return get_database_direct();
 }
 
 function data_exists($data) {

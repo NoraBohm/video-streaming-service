@@ -1,4 +1,7 @@
 <?php
+
+use GrahamCampbell\ResultType\Success;
+
 $displayname = $_POST["displayname"];
 $username = $_POST["username"];
 $email = $_POST["email"];
@@ -16,8 +19,15 @@ if ($displayname == "" || $displayname == null) {
 
 $success = false;
 
-require_once __DIR__ . '/functions.php';
-require_once __DIR__ . '/account_functions.php';
+//require_once __DIR__ . '/functions.php';
+//require_once __DIR__ . '/account_functions.php';
+
+/*if (!session_()) {
+    session_start();
+}*/
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/account_functions.php';
 
 function register_account($db, $username, $displayname, $email, $password) {
     $request = $db->prepare("INSERT INTO video_users (username, displayname, email, password) VALUES (?, ?, ?, ?)");
@@ -29,7 +39,7 @@ function register_account($db, $username, $displayname, $email, $password) {
 
 if ($username && $email && $password) {
     $username_is_email = is_email($username);
-    if ($username_is_email) {
+    if (! $username_is_email) {
         $has_email = is_email($email);
         if ($has_email) {
             $db = get_database();
@@ -41,7 +51,9 @@ if ($username && $email && $password) {
             } else {
                 list($success, $user_id) = register_account($db, $username, $displayname, $email, $password);
                 if ($success) {
+                    //session_start();
                     $_SESSION['id'] = $user_id;
+                    $Success = true;
                 } else {
                     throw_error("Internal error registering account");
                 }
