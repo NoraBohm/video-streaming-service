@@ -26,19 +26,26 @@ function upload_media() {
         $ffmpeg = FFMpeg\FFMpeg::create();
         $video = $ffmpeg->open($temp_name);
         
-        $ffmpeg->stream($temp_name)->videos()->first();
+        $stream = get_stream($temp_name);
+        $fps = $stream->getFrameRate();
 
         $video_filters = $video->filters();
 
         if ($fps > 30) {
             // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
-            $video_filters->framerate(30, $seek_time*30);
+            //$video_filters->framerate(30, $seek_time*30);
+            $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
         }
 
         $video_filters->synchronize();
     } else {
         throw_error("File upload failure");
     }
+}
+
+function get_stream($temp_name) {
+    $ffprobe = FFMpeg\FFProbe::create();
+    return $ffprobe->streams($temp_name)->videos()->first();
 }
 
 session_start();
