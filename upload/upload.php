@@ -32,6 +32,7 @@ function upload_media($action_mode) {
             $dimensions = $stream->getDimensions();
             $height = $dimensions->getHeight();
             $width = $dimensions->getwidth();
+            $resolution = get_resolution($height, $width);
 
             $video_filters = $video->filters();
 
@@ -58,6 +59,7 @@ function get_stream($temp_name) {
 }
 
 function get_resolution($height, $width) {
+    // maybe modify later for support for 2:1 instead of 16:9
     if ($height > 2160) {
         return 'height overflow';
     } elseif ($width > 4096) {
@@ -68,6 +70,12 @@ function get_resolution($height, $width) {
         return '1440p';
     } elseif ($height > 720 || $width > 1280) {
         return '1800p';
+    } elseif ($height > 480 || $width > 848) {
+        return '720p';
+    } elseif ($height > 360 || $width > 640) {
+        return '480p';
+    } else {
+        return 'under 480p';
     }
 }
 
