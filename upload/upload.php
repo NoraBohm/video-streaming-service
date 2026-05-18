@@ -18,26 +18,35 @@ function link_video_to_author($db, $author_id, $video_id) {
     return $request->execute();
 }
 
-function upload_media() {
+function upload_media($action_mode) {
     $video_file = $_FILES['video-upload'];
     //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
     if ($video_file['errors'] == 0) {
-        $ffmpeg = FFMpeg\FFMpeg::create();
-        $video = $ffmpeg->open($temp_name);
-        
         $stream = get_stream($temp_name);
-        $fps = $stream->getFrameRate();
+        if ($stream->isVideo()) {
+            $ffmpeg = FFMpeg\FFMpeg::create();
+            $video = $ffmpeg->open($temp_name);
+        
+            $fps = $stream->getFrameRate();
+            $dimensions = $stream->getDimensions();
+            $height = $dimensions->getHeight();
+            $width = $dimensions->getwidth();
 
-        $video_filters = $video->filters();
+            $video_filters = $video->filters();
 
-        if ($fps > 30) {
-            // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
-            //$video_filters->framerate(30, $seek_time*30);
-            $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
+            if ($fps > 30 && !$action_mode) {
+                // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
+                //$video_filters->framerate(30, $seek_time*30);
+                $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
+            } elseif ($fps > 60 && $action_mode) {
+                $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
+            }
+
+            $video_filters->synchronize();
+        } else {
+            throw_error("Upload is not video");
         }
-
-        $video_filters->synchronize();
     } else {
         throw_error("File upload failure");
     }
@@ -46,6 +55,20 @@ function upload_media() {
 function get_stream($temp_name) {
     $ffprobe = FFMpeg\FFProbe::create();
     return $ffprobe->streams($temp_name)->videos()->first();
+}
+
+function get_resolution($height, $width) {
+    if ($height > 2160) {
+        return 'height overflow';
+    } elseif ($width > 4096) {
+        return 'width overflow';
+    } elseif ($height > 1440 || $width > 5120) {
+        return '4k';
+    } elseif ($height > 1080 || $width > 1920) {
+        return '1440p';
+    } elseif ($height > 720 || $width > 1280) {
+        return '1800p';
+    }
 }
 
 session_start();
