@@ -49,6 +49,12 @@ function upload_media($action_mode) {
 
             $video_filters->synchronize();
 
+            // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
+            // var_dump($video->filters->getIterator());
+
+            // I may need to change the priority of the filters, they may over-write eachother if they are the same???
+            // Src: https://github.com/Webbopwork/PHP-FFMpeg-Extended/blob/master/src/FFMpeg/Filters/FiltersCollection.php Look at "add()"
+
 
         } else {
             throw_error("Upload is not video");
@@ -64,6 +70,20 @@ function upload_media($action_mode) {
 function get_stream($temp_name) {
     $ffprobe = FFMpeg\FFProbe::create();
     return $ffprobe->streams($temp_name)->videos()->first();
+}
+
+/**
+ * @param string $resolution;
+ */
+function resolution_loop($resolution) {
+    while (true) {
+        // Here make and export a version of the video with 
+        if ($resolution == 'under 480p') {
+            return $resolution;
+        } else {
+            $resolution = lower_resolution($resolution);
+        }
+    }
 }
 
 /**
@@ -152,6 +172,20 @@ function lower_resolution($resolution) {
             return 'height 1080p';
         case 'width 1440p':
             return 'width 1080p';
+
+        case 'height 1080p':
+            return 'height 720p';
+        case 'width 1080p':
+            return 'width 720p';
+
+        case 'height 720p':
+            return 'height 480p';
+        case 'width 720p':
+            return 'width 480p';
+
+        case 'height 480p':
+        case 'width 480p':
+            return 'under 480p';
     }
 }
 
