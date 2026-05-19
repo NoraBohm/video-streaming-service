@@ -18,6 +18,9 @@ function link_video_to_author($db, $author_id, $video_id) {
     return $request->execute();
 }
 
+/**
+ * @param bool $action_mode;
+ */
 function upload_media($action_mode) {
     $video_file = $_FILES['video-upload'];
     //$name = $video_file['name'];
@@ -45,6 +48,8 @@ function upload_media($action_mode) {
             }
 
             $video_filters->synchronize();
+
+
         } else {
             throw_error("Upload is not video");
         }
@@ -53,29 +58,100 @@ function upload_media($action_mode) {
     }
 }
 
+/**
+ * @param string $temp_name;
+ */
 function get_stream($temp_name) {
     $ffprobe = FFMpeg\FFProbe::create();
     return $ffprobe->streams($temp_name)->videos()->first();
 }
 
+/**
+ * @param int $height;
+ * @param int $width;
+ */
 function get_resolution($height, $width) {
     // maybe modify later for support for 2:1 instead of 16:9
     if ($height > 2160) {
         return 'height overflow';
-    } elseif ($width > 4096) {
+    } elseif ($width > 3584) {
         return 'width overflow';
-    } elseif ($height > 1440 || $width > 5120) {
-        return '4k';
-    } elseif ($height > 1080 || $width > 1920) {
-        return '1440p';
-    } elseif ($height > 720 || $width > 1280) {
-        return '1800p';
-    } elseif ($height > 480 || $width > 848) {
-        return '720p';
-    } elseif ($height > 360 || $width > 640) {
-        return '480p';
+    } elseif ($height > 1440) {
+        return 'height 4k';
+    } elseif ($width > 2560) {
+        return 'width 4k';
+    } elseif ($height > 1080) {
+        return 'height 1440p';
+    } elseif ($width > 1920) {
+        return 'width 1440p';
+    } elseif ($height > 720) {
+        return 'height 1800p';
+    } elseif ($width > 1280) {
+        return 'width 1800p';
+    } elseif ($height > 480) {
+        return 'height 720p';
+    } elseif ($width > 848) {
+        return 'width 720p';
+    } elseif ($height > 360) {
+        return 'height 480p';
+    } elseif ($width > 640) {
+        return 'width 480p';
     } else {
         return 'under 480p';
+    }
+}
+
+/**
+ * @param string $resolution;
+ * @param mixed $filters;
+ */
+function resolution_work($resolution, $filters) {
+    switch ($resolution) {
+        case 'height overflow':
+        case 'height 4k':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+        case 'width overflow':
+        case 'width 4k':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(3584, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+
+        case 'height 1440p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1440), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+        case 'width 1440p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(2560, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+
+        case 'height 1080p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1080), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+        case 'width 1080p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(1920, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+
+        case 'height 720p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 720), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+        case 'width 720p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(1280, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+
+        case 'height 480p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 480), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+        case 'width 480p':
+            return $filters->resize(new FFMpeg\Coordinate\Dimension(848, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+    }
+}
+
+/**
+ * @param string $resolution;
+ */
+function lower_resolution($resolution) {
+    switch ($resolution) {
+        case 'height overflow':
+        case 'height 4k':
+            return 'height 1440p';
+        case 'width overflow':
+        case 'width 4k':
+            return 'width 1440p';
+        
+        case 'height 1440p':
+            return 'height 1080p';
+        case 'width 1440p':
+            return 'width 1080p';
     }
 }
 
