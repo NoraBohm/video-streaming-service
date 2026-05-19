@@ -7,3 +7,5 @@ RUN docker-php-ext-install mysqli pdo_mysql
 RUN apt-get update && apt-get install -y git unzip \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get install ffmpeg && apt-get install ffprobe
