@@ -1,4 +1,7 @@
 <?php
+
+//use FFMpeg\FFMpeg;
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 
@@ -21,7 +24,7 @@ function link_video_to_author($db, $author_id, $video_id) {
 /**
  * @param bool $action_mode;
  */
-function upload_media($action_mode) {
+function upload_media($action_mode, $author_id) {
     $video_file = $_FILES['video-upload'];
     //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
@@ -54,6 +57,15 @@ function upload_media($action_mode) {
 
             // I may need to change the priority of the filters, they may over-write eachother if they are the same???
             // Src: https://github.com/Webbopwork/PHP-FFMpeg-Extended/blob/master/src/FFMpeg/Filters/FiltersCollection.php Look at "add()"
+
+            // For the time being just save one resolution
+
+            resolution_work($resolution, $video_filters);
+
+            // example value to get this working.
+            $video_id = 40;
+
+            $video->save(new FFMpeg\Format\Video\MKV(), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.mkv");
 
 
         } else {
@@ -190,13 +202,14 @@ function lower_resolution($resolution) {
 }
 
 session_start();
-if ($_SESSION['id']) {
-    
+$author_id = $_SESSION['id'];
+if ($author_id) {
+    upload_media(false, $author_id);
 }
 
-if ($video_id) {
+/*if ($video_id) {
     header("Location: /watch?id=" . urlencode(dechex($video_id)));
 } else {
     header("Location: /upload");
-}
+}*/
 ?>
