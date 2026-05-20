@@ -9,4 +9,4 @@ RUN apt-get update && apt-get install -y git unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install FFMpeg and FFProbe
-# RUN apt install ffmpeg && apt install ffprobe
+RUN apt install -y ffmpeg
