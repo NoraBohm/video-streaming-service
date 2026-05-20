@@ -19,8 +19,10 @@ RUN apt-get update && apt-get install -y git unzip \
 # RUN curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-8.1.1.tar.gz && ./ffmpeg-8.1.1/configure && make && make install
 # RUN curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-8.1.1.tar.gz && ./ffmpeg-8.1.1/configure && make install
 # RUN cp bin/ffmpeg /usr/bin/ffmpeg && cp bin/ffprobe /usr/bin/ffprobe && chmod +x /bin/ffmpeg && chmod +x /bin/ffprobe
-RUN curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffmpeg \
-    && curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffprobe \
+# RUN curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffmpeg \
+#    && curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffprobe \
+RUN curl -O https://dempah.com/bin-upload/ffmpeg/ffmpeg \
+    && curl -O https://dempah.com/bin-upload/ffmpeg/ffprobe \
     && cp ./ffmpeg /usr/bin/ffmpeg && cp ./ffprobe /usr/bin/ffprobe && chmod +x /usr/bin/ffmpeg && chmod +x /usr/bin/ffprobe
 
 # Install Git and Composer
