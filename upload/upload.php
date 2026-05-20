@@ -23,6 +23,7 @@ function link_video_to_author($db, $author_id, $video_id) {
 
 /**
  * @param bool $action_mode;
+ * @param int $author_id;
  */
 function upload_media($action_mode, $author_id) {
     $video_file = $_FILES['video-upload'];
