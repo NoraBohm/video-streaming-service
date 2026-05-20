@@ -65,14 +65,17 @@ function upload_media($action_mode, $author_id) {
             // example value to get this working.
             $video_id = 40;
 
-            $video->save(new FFMpeg\Format\Video\MKV(), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.mkv");
-
+            //var_dump($video->save(new FFMpeg\Format\Video\MKV(), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.mkv"));
+            var_dump($video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.webm"));
+            echo "video uploaded";
 
         } else {
             throw_error("Upload is not video");
+            echo "Is not video";
         }
     } else {
         throw_error("File upload failure");
+        echo "Upload fail";
     }
 }
 
@@ -205,6 +208,8 @@ session_start();
 $author_id = $_SESSION['id'];
 if ($author_id) {
     upload_media(false, $author_id);
+} else {
+    upload_media(false, 0);
 }
 
 /*if ($video_id) {
