@@ -42,4 +42,4 @@ RUN curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-
 #     && curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-8.1.1.tar.gz && ./ffmpeg-8.1.1/configure && make install \
 #     && composer update
 
-RUN composer update
+# RUN composer update
