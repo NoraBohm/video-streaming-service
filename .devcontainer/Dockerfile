@@ -37,4 +37,5 @@ RUN docker-php-ext-install mysqli pdo_mysql
 RUN apt-get update && apt-get install -y git unzip \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-8.1.1.tar.gz && ./ffmpeg-8.1.1/configure && make install
+    && curl -O https://ffmpeg.org/releases/ffmpeg-8.1.1.tar.gz && tar -xvzf ffmpeg-8.1.1.tar.gz && ./ffmpeg-8.1.1/configure && make install \
+    && composer update
