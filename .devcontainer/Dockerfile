@@ -21,8 +21,11 @@ RUN apt-get update && apt-get install -y git unzip \
 # RUN cp bin/ffmpeg /usr/bin/ffmpeg && cp bin/ffprobe /usr/bin/ffprobe && chmod +x /bin/ffmpeg && chmod +x /bin/ffprobe
 # RUN curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffmpeg \
 #    && curl -O https://raw.githubusercontent.com/NoraBohm/qtools/refs/heads/main/bin/ffprobe \
-RUN curl -O http://dempah.com/bin-upload/ffmpeg/ffmpeg \
-    && curl -O http://dempah.com/bin-upload/ffmpeg/ffprobe \
+# RUN curl -O http://dempah.com/bin-upload/ffmpeg/ffmpeg \
+#     && curl -O http://dempah.com/bin-upload/ffmpeg/ffprobe \
+#     && cp ./ffmpeg /usr/bin/ffmpeg && cp ./ffprobe /usr/bin/ffprobe && chmod +x /usr/bin/ffmpeg && chmod +x /usr/bin/ffprobe
+RUN curl -O https://github.com/NoraBohm/video-streaming-service/raw/refs/heads/main/bin/ffmpeg \
+    && curl -O https://github.com/NoraBohm/video-streaming-service/raw/refs/heads/main/bin/ffprobe \
     && cp ./ffmpeg /usr/bin/ffmpeg && cp ./ffprobe /usr/bin/ffprobe && chmod +x /usr/bin/ffmpeg && chmod +x /usr/bin/ffprobe
 
 # Install Git and Comsposer
