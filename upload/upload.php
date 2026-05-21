@@ -6,9 +6,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 
 // Modify to upload video
-function upload_video_to_database($db, $title, $description) {
-    $request = $db->prepare("INSERT INTO video_videos (title, description) VALUES (?, ?)");
-    $request->bind_param("ss", $title, $description);
+function upload_video_to_database($db, $title, $description, $max_resolution) {
+    $request = $db->prepare("INSERT INTO video_videos (title, description, max_resolution) VALUES (?, ?, ?)");
+    $request->bind_param("sss", $title, $description, $max_resolution);
     //$request->execute();
     $request_results = $request->execute();
     return [$request_results, $db->insert_id];
@@ -25,7 +25,7 @@ function link_video_to_author($db, $author_id, $video_id) {
  * @param bool $action_mode;
  * @param int $author_id;
  */
-function upload_media($action_mode, $author_id) {
+function upload_media($action_mode, $author_id, $title, $description) {
     $video_file = $_FILES['video-upload'];
     //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
@@ -51,7 +51,7 @@ function upload_media($action_mode, $author_id) {
                 $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
             }
 
-            $video_filters->synchronize();
+            // $video_filters->synchronize();
 
             // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
             // var_dump($video->filters->getIterator());
@@ -63,20 +63,40 @@ function upload_media($action_mode, $author_id) {
 
             resolution_work($resolution, $video_filters);
 
-            // example value to get this working.
-            $video_id = 40;
+            $video_filters->synchronize();
 
-            //var_dump($video->save(new FFMpeg\Format\Video\MKV(), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.mkv"));
-            var_dump($video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$resolution.webm"));
-            echo "video uploaded";
+            $saved_resolution = save_resolution($resolution);
+
+            // example value to get this working.
+            //$video_id = 40;
+
+            $db = get_database();
+
+            list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
+
+            // Saving the video locally in the media database
+            $video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$saved_resolution.webm");
+            //echo "video uploaded";
+            if ($video_success) {
+                $link_success = link_video_to_author($db, $author_id, $video_id);
+                if ($link_success) {
+                    return $video_id;
+                } else {
+                    throw_error("Linking account to video failed");
+                }
+            } else {
+                throw_error("Converting video failed");
+            }
+
+            //return [$success, $video_id];
 
         } else {
             throw_error("Upload is not video");
-            echo "Is not video";
+            //echo "Is not video";
         }
     } else {
         throw_error("File upload failure");
-        echo "Upload fail";
+        //echo "Upload fail";
     }
 }
 
@@ -123,7 +143,7 @@ function get_resolution($height, $width) {
     } elseif ($height > 720) {
         return 'height 1800p';
     } elseif ($width > 1280) {
-        return 'width 1800p';
+        return 'width 1080p';
     } elseif ($height > 480) {
         return 'height 720p';
     } elseif ($width > 848) {
@@ -143,32 +163,67 @@ function get_resolution($height, $width) {
  */
 function resolution_work($resolution, $filters) {
     switch ($resolution) {
+        // Setting the resolution filters here
         case 'height overflow':
         case 'height 4k':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width overflow':
         case 'width 4k':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(3584, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(3584, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 1440p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1440), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1440), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 1440p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(2560, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(2560, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 1080p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1080), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1080), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 1080p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(1920, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(1920, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 720p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 720), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 720), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 720p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(1280, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(1280, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 480p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 480), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 480), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 480p':
-            return $filters->resize(new FFMpeg\Coordinate\Dimension(848, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(848, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+
+        
+        // Setting the bitrate filters here
+        // Numbers are based on this website: https://www.videosdk.live/developer-hub/media-server/video-bitrate-for-streaming
+        case 'height overflow':
+        case 'height 4k':
+        case 'width overflow':
+        case 'width 4k':
+            // 500Kb over site 30fps
+            return $filters->bitRateRange('14000Kb', '34500Kb');
+        
+        case 'height 1440p':
+        case 'width 1440p':
+            // Based on 1080p and 4k values
+            return $filters->bitRateRange('9000Kb', '12000Kb');
+
+        case 'height 1080p':
+        case 'width 1080p':
+            // 300Kb over site 30fps
+            return $filters->bitRateRange('4800Kb', '6300Kb');
+
+        case 'height 720p':
+        case 'width 720p':
+            // 200Kb over site 30fps
+            return $filters->bitRateRange('2700Kb', '4200Kb');
+
+        case 'height 480p':
+        case 'width 480p':
+            // 200Kb over site 30fps
+            return $filters->bitRateRange('1200Kb', '2200Kb');
+
+        case 'under 480p':
+            // 200Kb over site 30fps
+            return $filters->bitRateRange('800Kb', '1100');
     }
 }
 
@@ -205,17 +260,55 @@ function lower_resolution($resolution) {
     }
 }
 
-session_start();
-$author_id = $_SESSION['id'];
-if ($author_id) {
-    upload_media(false, $author_id);
-} else {
-    upload_media(false, 0);
+/**
+ * @param string $resolution;
+ */
+function save_resolution($resolution) {
+    switch ($resolution) {
+        case 'height overflow':
+        case 'height 4k':
+        case 'width overflow':
+        case 'width 4k':
+            return '4k';
+        
+        case 'height 1440p':
+        case 'width 1440p':
+            return '1440p';
+
+        case 'height 1080p':
+        case 'width 1080p':
+            return '1080p';
+
+        case 'height 720p':
+        case 'width 720p':
+            return '720p';
+
+        case 'height 480p':
+        case 'width 480p':
+            return '480p';
+
+        case 'under 480p':
+            return 'u480p';
+    }
 }
 
-/*if ($video_id) {
+$title = $_POST['title'];
+$description = $_POST['description'];
+$action_mode = $_POST['action-mode'] == 'action mode';
+
+$precheck = (!is_null($title) && !is_null($description));
+
+$video_id = null;
+
+session_start();
+$author_id = $_SESSION['id'];
+if (!is_null($author_id)) {
+    $video_id = upload_media($action_mode, $author_id, $title, $description);
+}
+
+if ($precheck && !is_null($video_id)) {
     header("Location: /watch?id=" . urlencode(dechex($video_id)));
 } else {
     header("Location: /upload");
-}*/
+}
 ?>

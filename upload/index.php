@@ -12,7 +12,19 @@
     <form action="/upload/upload.php" method="POST" enctype="multipart/form-data" id="form">
         <p>
             <label for="video-upload">Upload video</label>
-            <input type="file" value="Upload video" name="video-upload" id="video-upload">
+            <input type="file" value="Upload video" name="video-upload" id="video-upload" required>
+        </p>
+        <p>
+            <label for="title">Title</label>
+            <input type="text" name="title" placeholder="Title" id="title" required>
+        </p>
+        <p>
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Description" required></textarea>
+        </p>
+        <p>
+            <label for="action-mode">Action mode</label>
+            <input type="checkbox" name="action-mode" value="action mode" id="action-mode">
         </p>
         <input type="submit" value="Upload">
     </form>
