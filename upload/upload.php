@@ -5,7 +5,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 
-// Modify to upload video
+// This uploads the video information to the database
 function upload_video_to_database($db, $title, $description, $max_resolution) {
     $request = $db->prepare("INSERT INTO video_videos (title, description, max_resolution) VALUES (?, ?, ?)");
     $request->bind_param("sss", $title, $description, $max_resolution);
@@ -15,12 +15,14 @@ function upload_video_to_database($db, $title, $description, $max_resolution) {
     //return $db->insert_id;
 }
 
+// This connects the video to the author in a database, allowing multiple video authors
 function link_video_to_author($db, $author_id, $video_id) {
     $request = $db->prepare("INSERT INTO video_videos (author_id, video_id) VALUES (?, ?)");
     $request->bind_param("ii", $author_id, $video_id);
     return $request->execute();
 }
 
+// This is the primarily video uploading process, it does conversion, saving, as well as the functions of the functions used in it.
 /**
  * @param bool $action_mode;
  * @param int $author_id;
@@ -34,15 +36,18 @@ function upload_media($action_mode, $author_id, $title, $description) {
         if ($stream->isVideo()) {
             $ffmpeg = FFMpeg\FFMpeg::create();
             $video = $ffmpeg->open($temp_name);
-        
+
+            // Getting data about the video
             $fps = $stream->getFrameRate();
             $dimensions = $stream->getDimensions();
             $height = $dimensions->getHeight();
             $width = $dimensions->getwidth();
             $resolution = get_resolution($height, $width);
 
+            // Getting the filters of the video
             $video_filters = $video->filters();
 
+            // Functionally applying action mode, limiting it ot 60 or 30 FPS depedning on if it's selected
             if ($fps > 30 && !$action_mode) {
                 // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
                 //$video_filters->framerate(30, $seek_time*30);
@@ -50,8 +55,6 @@ function upload_media($action_mode, $author_id, $title, $description) {
             } elseif ($fps > 60 && $action_mode) {
                 $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
             }
-
-            // $video_filters->synchronize();
 
             // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
             // var_dump($video->filters->getIterator());
@@ -63,43 +66,43 @@ function upload_media($action_mode, $author_id, $title, $description) {
 
             resolution_work($resolution, $video_filters);
 
+            // Setting the quality level of the video, since it's AV1 then 35 is 11 higher than practically lossless, so it's a bit worse quality than practically lossless
+            $video_filters->constantRateFactor('35');
+
             $video_filters->synchronize();
 
+            // Getting resolution text fit for a media file
             $saved_resolution = save_resolution($resolution);
 
-            // example value to get this working.
-            //$video_id = 40;
-
+            // Getting pre-prepared database
             $db = get_database();
 
+            // Uploading video to database
             list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
 
-            // Saving the video locally in the media database
-            $video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$saved_resolution.webm");
-            //echo "video uploaded";
             if ($video_success) {
+                // Saving the video locally in the media database
+                $video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$saved_resolution.webm");
+                // Linking video to author
                 $link_success = link_video_to_author($db, $author_id, $video_id);
                 if ($link_success) {
                     return $video_id;
                 } else {
-                    throw_error("Linking account to video failed");
+                    throw_error("Linking author to video failed");
                 }
             } else {
                 throw_error("Converting video failed");
             }
 
-            //return [$success, $video_id];
-
         } else {
             throw_error("Upload is not video");
-            //echo "Is not video";
         }
     } else {
         throw_error("File upload failure");
-        //echo "Upload fail";
     }
 }
 
+// This gets the FFProbe video stream, it allows access to data about the video
 /**
  * @param string $temp_name;
  */
@@ -108,6 +111,9 @@ function get_stream($temp_name) {
     return $ffprobe->streams($temp_name)->videos()->first();
 }
 
+
+// This is upposed to loop in order to cover all the resolutions including and lower than the max resolution
+// This has not been impilmented yet
 /**
  * @param string $resolution;
  */
@@ -122,6 +128,7 @@ function resolution_loop($resolution) {
     }
 }
 
+// This gets a text representation of what resolution to use from the height and width
 /**
  * @param int $height;
  * @param int $width;
@@ -157,13 +164,14 @@ function get_resolution($height, $width) {
     }
 }
 
+// This based on the resolution adds different filters
 /**
  * @param string $resolution;
  * @param mixed $filters;
  */
 function resolution_work($resolution, $filters) {
     switch ($resolution) {
-        // Setting the resolution filters here
+        // Setting the resolution filters here, intentionally left non-blocking to allow the bitrate filters
         case 'height overflow':
         case 'height 4k':
             $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
@@ -227,6 +235,7 @@ function resolution_work($resolution, $filters) {
     }
 }
 
+// This converts a text representation of a resolution to a text representation of a lower resolution, used for creating multiple resolution options
 /**
  * @param string $resolution;
  */
@@ -260,6 +269,7 @@ function lower_resolution($resolution) {
     }
 }
 
+// This converts the text representation of a resolution to a text representation that doesn't care for if it's width of height based, making it better for media upload.
 /**
  * @param string $resolution;
  */
@@ -292,21 +302,26 @@ function save_resolution($resolution) {
     }
 }
 
+// Getting details from the webpage before
 $title = $_POST['title'];
 $description = $_POST['description'];
+// Action mode allows up to 60 FPS ina video, while it's normally limited to up to 30 FPS
 $action_mode = $_POST['action-mode'] == 'action mode';
 
+// Checking that the data is there
 $precheck = (!is_null($title) && !is_null($description));
 
 $video_id = null;
 
 session_start();
 $author_id = $_SESSION['id'];
-if (!is_null($author_id)) {
+if ($precheck && !is_null($author_id)) {
     $video_id = upload_media($action_mode, $author_id, $title, $description);
 }
 
-if ($precheck && !is_null($video_id)) {
+// If the video is successfully uploaded send 
+if (!is_null($video_id)) {
+    // Use hex version of video id in link to shorten it and make it neater
     header("Location: /watch?id=" . urlencode(dechex($video_id)));
 } else {
     header("Location: /upload");
