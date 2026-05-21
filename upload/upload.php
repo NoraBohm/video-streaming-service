@@ -73,7 +73,7 @@ function upload_media($action_mode, $author_id, $title, $description) {
                 resolution_work($resolution, $video_filters, $width, $height);
 
                 // Setting the quality level of the video, since it's AV1 then 35 is 11 higher than practically lossless, so it's a bit worse quality than practically lossless
-                // $video_filters->constantRateFactor('35');
+                $video_filters->constantRateFactor('35');
 
                 $video_filters->synchronize();
 
@@ -341,3 +341,4 @@ if (!is_null($video_id)) {
     header("Location: /upload");
 }
 ?>
+

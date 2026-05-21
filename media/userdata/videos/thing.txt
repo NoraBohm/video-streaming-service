@@ -2,4 +2,4 @@ yes
 
 For some reason it doesn't even save the data, it's just a empty file with no errors
 
-Seems like it only happens when it's "u480p" or "oddity", maybe making it scale
+Seems like it only happens when it's "u480p" or "oddity", maybe making it scale would fix it?????????
