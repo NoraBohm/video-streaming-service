@@ -206,7 +206,7 @@ function resolution_work($resolution, $filters) {
         case 'height 4k':
         case 'width overflow':
         case 'width 4k':
-            // 500Kb over site 30fps
+            // 500Kb over site 30fps for max
             return $filters->bitRateRange('14000Kb', '34500Kb');
         
         case 'height 1440p':
@@ -216,22 +216,22 @@ function resolution_work($resolution, $filters) {
 
         case 'height 1080p':
         case 'width 1080p':
-            // 300Kb over site 30fps
-            return $filters->bitRateRange('4800Kb', '6300Kb');
+            // 300Kb over site 30fps for max
+            return $filters->bitRateRange('4500Kb', '6300Kb');
 
         case 'height 720p':
         case 'width 720p':
-            // 200Kb over site 30fps
-            return $filters->bitRateRange('2700Kb', '4200Kb');
+            // 200Kb over site 30fps for max
+            return $filters->bitRateRange('2500Kb', '4200Kb');
 
         case 'height 480p':
         case 'width 480p':
-            // 200Kb over site 30fps
-            return $filters->bitRateRange('1200Kb', '2200Kb');
+            // 200Kb over site 30fps for max
+            return $filters->bitRateRange('1000Kb', '2200Kb');
 
         case 'under 480p':
-            // 200Kb over site 30fps
-            return $filters->bitRateRange('800Kb', '1100');
+            // 200Kb over site 30fps for max
+            return $filters->bitRateRange('600Kb', '1100Kb');
     }
 }
 
