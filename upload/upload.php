@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 //use FFMpeg\FFMpeg;
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
@@ -207,31 +209,31 @@ function resolution_work($resolution, $filters) {
         case 'width overflow':
         case 'width 4k':
             // 500Kb over site 30fps for max
-            return $filters->bitRateRange('14000Kb', '34500Kb');
+            return $filters->bitRateRange('14000k', '34500k');
         
         case 'height 1440p':
         case 'width 1440p':
             // Based on 1080p and 4k values
-            return $filters->bitRateRange('9000Kb', '12000Kb');
+            return $filters->bitRateRange('9000k', '12000k');
 
         case 'height 1080p':
         case 'width 1080p':
             // 300Kb over site 30fps for max
-            return $filters->bitRateRange('4500Kb', '6300Kb');
+            return $filters->bitRateRange('4500k', '6300k');
 
         case 'height 720p':
         case 'width 720p':
             // 200Kb over site 30fps for max
-            return $filters->bitRateRange('2500Kb', '4200Kb');
+            return $filters->bitRateRange('2500k', '4200k');
 
         case 'height 480p':
         case 'width 480p':
             // 200Kb over site 30fps for max
-            return $filters->bitRateRange('1000Kb', '2200Kb');
+            return $filters->bitRateRange('1000k', '2200k');
 
         case 'under 480p':
             // 200Kb over site 30fps for max
-            return $filters->bitRateRange('600Kb', '1100Kb');
+            return $filters->bitRateRange('600k', '1100k');
     }
 }
 
@@ -313,7 +315,7 @@ $precheck = (!is_null($title) && !is_null($description));
 
 $video_id = null;
 
-session_start();
+//session_start();
 $author_id = $_SESSION['id'];
 if ($precheck && !is_null($author_id)) {
     $video_id = upload_media($action_mode, $author_id, $title, $description);

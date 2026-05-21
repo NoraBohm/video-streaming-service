@@ -1233,12 +1233,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Webbopwork/PHP-FFMpeg-Extended.git",
-                "reference": "710517bb6d41ec9716586dc05cfd94b047f5cc38"
+                "reference": "84faced024db17bbaafeed79ab000b63cffa4e94"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Webbopwork/PHP-FFMpeg-Extended/zipball/710517bb6d41ec9716586dc05cfd94b047f5cc38",
-                "reference": "710517bb6d41ec9716586dc05cfd94b047f5cc38",
+                "url": "https://api.github.com/repos/Webbopwork/PHP-FFMpeg-Extended/zipball/84faced024db17bbaafeed79ab000b63cffa4e94",
+                "reference": "84faced024db17bbaafeed79ab000b63cffa4e94",
                 "shasum": ""
             },
             "require": {
@@ -1314,7 +1314,7 @@
             "support": {
                 "source": "https://github.com/Webbopwork/PHP-FFMpeg-Extended/tree/master"
             },
-            "time": "2026-04-30T07:17:47+00:00"
+            "time": "2026-05-21T09:16:52+00:00"
         }
     ],
     "packages-dev": [],
