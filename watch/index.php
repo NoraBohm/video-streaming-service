@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player</title>
-    <script src="/js/player.js"></script>
+    <script src="/js/player.js" defer></script>
 </head>
 <body>
     <noscript>You need to enable Javascript to use this service.</noscript>

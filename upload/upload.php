@@ -32,7 +32,7 @@ function link_video_to_author($db, $author_id, $video_id) {
 function upload_media($action_mode, $author_id, $title, $description) {
     $video_file = $_FILES['video-upload'];
     var_dump($video_file, $_FILES, $_POST);
-    //$name = $video_file['name'];d
+    //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
     // Checks if it has a video mimetype 
     if (str_starts_with($video_file['type'], 'video/')) {

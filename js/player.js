@@ -1,15 +1,18 @@
 const player = document.getElementById('player');
-const source = player.getElementsByTagName('source')[0];
+const source = document.getElementsByTagName('source')[0];
 
+console.log(player, source);
 // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 /*const urlParams = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
 });*/
 const urlParams = new URLSearchParams(window.location.search);
 const video_id = urlParams.get("id");
-if (!Number.isInterger(video_id) || (0 > video_id)) {
+
+// Don't use the interger checker because we use hexadecimals now
+/*if (!Number.isInteger(video_id) || (0 > video_id)) {
     throwError("No or invalid id");
-}
+}*/
 
 function updateBufferProgress(bufferProgress) {
     console.log(`Buffer progress: ${bufferProgress}`);
@@ -28,8 +31,10 @@ function loadVideo(id, res) {
     3 = 1080p
     4 = 4k
     }
+
+    Nvm just make "res" a string, because that's how it's stored in the database
     */
-    source.src = `stream.php?id=${encodeURIComponent(id)}&res=${encodeURIComponent(res)}`;
+    source.src = `/watch/stream.php?id=${encodeURIComponent(id)}&res=${encodeURIComponent(res)}`;
 
     player.load();
 
@@ -53,3 +58,5 @@ player.addEventListener('progress', function() {
         updateBufferProgress(bufferProgress);
     }  
 });
+
+loadVideo(video_id, '720p');
