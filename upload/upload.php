@@ -19,7 +19,7 @@ function upload_video_to_database($db, $title, $description, $max_resolution) {
 
 // This connects the video to the author in a database, allowing multiple video authors
 function link_video_to_author($db, $author_id, $video_id) {
-    $request = $db->prepare("INSERT INTO video_videos (author_id, video_id) VALUES (?, ?)");
+    $request = $db->prepare("INSERT INTO video_videos_authors (author_id, video_id) VALUES (?, ?)");
     $request->bind_param("ii", $author_id, $video_id);
     return $request->execute();
 }
@@ -31,7 +31,8 @@ function link_video_to_author($db, $author_id, $video_id) {
  */
 function upload_media($action_mode, $author_id, $title, $description) {
     $video_file = $_FILES['video-upload'];
-    //$name = $video_file['name'];
+    var_dump($video_file, $_FILES, $_POST);
+    //$name = $video_file['name'];d
     $temp_name = $video_file['tmp_name'];
     // Checks if it has a video mimetype 
     if (str_starts_with($video_file['type'], 'video/')) {
@@ -69,10 +70,10 @@ function upload_media($action_mode, $author_id, $title, $description) {
 
                 // For the time being just save one resolution
 
-                resolution_work($resolution, $video_filters);
+                resolution_work($resolution, $video_filters, $width, $height);
 
                 // Setting the quality level of the video, since it's AV1 then 35 is 11 higher than practically lossless, so it's a bit worse quality than practically lossless
-                $video_filters->constantRateFactor('35');
+                // $video_filters->constantRateFactor('35');
 
                 $video_filters->synchronize();
 
@@ -106,7 +107,7 @@ function upload_media($action_mode, $author_id, $title, $description) {
             throw_error("File upload failure");
         }
     } else {
-        throw_error("Upload mimetype is not video");
+        throw_error("Upload mimetype is not video, it is " . $video_file['type']);
     }
 }
 
@@ -176,36 +177,38 @@ function get_resolution($height, $width) {
 /**
  * @param string $resolution;
  * @param mixed $filters;
+ * @param int $width;
+ * @param int $height;
  */
-function resolution_work($resolution, $filters) {
+function resolution_work($resolution, $filters, $width, $height) {
     switch ($resolution) {
         // Setting the resolution filters here, intentionally left non-blocking to allow the bitrate filters
         case 'height overflow':
         case 'height 4k':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension($width, 2160), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width overflow':
         case 'width 4k':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(3584, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(3584, $height), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 1440p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1440), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension($width, 1440), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 1440p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(2560, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(2560, $height), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 1080p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 1080), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension($width, 1080), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 1080p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(1920, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(1920, $height), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         case 'height 720p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 720), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension($width, 720), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
         case 'width 720p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(1280, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(1280, $height), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
 
         case 'height 480p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(-1, 480), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
+            $filters->resize(new FFMpeg\Coordinate\Dimension($width, 480), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_HEIGHT);
         case 'width 480p':
-            $filters->resize(new FFMpeg\Coordinate\Dimension(848, -1), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
+            $filters->resize(new FFMpeg\Coordinate\Dimension(848, $height), FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_SCALE_WIDTH);
 
         
         // Setting the bitrate filters here
@@ -307,6 +310,9 @@ function save_resolution($resolution) {
 
         case 'under 480p':
             return 'u480p';
+        
+        default:
+            return 'oddity';
     }
 }
 

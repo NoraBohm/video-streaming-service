@@ -12,7 +12,7 @@
     <form action="/upload/upload.php" method="POST" enctype="multipart/form-data" id="form">
         <p>
             <label for="video-upload">Upload video</label>
-            <input type="file" value="Upload video" name="video-upload" id="video-upload" required>
+            <input type="file" value="Upload video" name="video-upload" id="video-upload" accept="video/*" required>
         </p>
         <p>
             <label for="title">Title</label>
