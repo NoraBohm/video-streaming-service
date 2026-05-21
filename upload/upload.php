@@ -33,74 +33,80 @@ function upload_media($action_mode, $author_id, $title, $description) {
     $video_file = $_FILES['video-upload'];
     //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
-    if ($video_file['errors'] == 0) {
-        $stream = get_stream($temp_name);
-        if ($stream->isVideo()) {
-            $ffmpeg = FFMpeg\FFMpeg::create();
-            $video = $ffmpeg->open($temp_name);
+    // Checks if it has a video mimetype 
+    if (str_starts_with($video_file['type'], 'video/')) {
+        // Checks if there are no errors
+        if ($video_file['errors'] == 0) {
+            $stream = get_stream($temp_name);
+            if ($stream->isVideo()) {
+                $ffmpeg = FFMpeg\FFMpeg::create();
+                $video = $ffmpeg->open($temp_name);
 
-            // Getting data about the video
-            $fps = $stream->getFrameRate();
-            $dimensions = $stream->getDimensions();
-            $height = $dimensions->getHeight();
-            $width = $dimensions->getwidth();
-            $resolution = get_resolution($height, $width);
+                // Getting data about the video
+                $fps = $stream->getFrameRate();
+                $dimensions = $stream->getDimensions();
+                $height = $dimensions->getHeight();
+                $width = $dimensions->getwidth();
+                $resolution = get_resolution($height, $width);
 
-            // Getting the filters of the video
-            $video_filters = $video->filters();
+                // Getting the filters of the video
+                $video_filters = $video->filters();
 
-            // Functionally applying action mode, limiting it ot 60 or 30 FPS depedning on if it's selected
-            if ($fps > 30 && !$action_mode) {
-                // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
-                //$video_filters->framerate(30, $seek_time*30);
-                $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
-            } elseif ($fps > 60 && $action_mode) {
-                $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
-            }
-
-            // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
-            // var_dump($video->filters->getIterator());
-
-            // I may need to change the priority of the filters, they may over-write eachother if they are the same???
-            // Src: https://github.com/Webbopwork/PHP-FFMpeg-Extended/blob/master/src/FFMpeg/Filters/FiltersCollection.php Look at "add()"
-
-            // For the time being just save one resolution
-
-            resolution_work($resolution, $video_filters);
-
-            // Setting the quality level of the video, since it's AV1 then 35 is 11 higher than practically lossless, so it's a bit worse quality than practically lossless
-            $video_filters->constantRateFactor('35');
-
-            $video_filters->synchronize();
-
-            // Getting resolution text fit for a media file
-            $saved_resolution = save_resolution($resolution);
-
-            // Getting pre-prepared database
-            $db = get_database();
-
-            // Uploading video to database
-            list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
-
-            if ($video_success) {
-                // Saving the video locally in the media database
-                $video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$saved_resolution.webm");
-                // Linking video to author
-                $link_success = link_video_to_author($db, $author_id, $video_id);
-                if ($link_success) {
-                    return $video_id;
-                } else {
-                    throw_error("Linking author to video failed");
+                // Functionally applying action mode, limiting it ot 60 or 30 FPS depedning on if it's selected
+                if ($fps > 30 && !$action_mode) {
+                    // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
+                    //$video_filters->framerate(30, $seek_time*30);
+                    $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
+                } elseif ($fps > 60 && $action_mode) {
+                    $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
                 }
-            } else {
-                throw_error("Converting video failed");
-            }
 
+                // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
+                // var_dump($video->filters->getIterator());
+
+                // I may need to change the priority of the filters, they may over-write eachother if they are the same???
+                // Src: https://github.com/Webbopwork/PHP-FFMpeg-Extended/blob/master/src/FFMpeg/Filters/FiltersCollection.php Look at "add()"
+
+                // For the time being just save one resolution
+
+                resolution_work($resolution, $video_filters);
+
+                // Setting the quality level of the video, since it's AV1 then 35 is 11 higher than practically lossless, so it's a bit worse quality than practically lossless
+                $video_filters->constantRateFactor('35');
+
+                $video_filters->synchronize();
+
+                // Getting resolution text fit for a media file
+                $saved_resolution = save_resolution($resolution);
+
+                // Getting pre-prepared database
+                $db = get_database();
+
+                // Uploading video to database
+                list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
+
+                if ($video_success) {
+                    // Saving the video locally in the media database
+                    $video->save(new FFMpeg\Format\Video\WebM('libopus', 'libaom-av1'), $_SERVER['DOCUMENT_ROOT'] . "/media/userdata/videos/$author_id-$video_id-$saved_resolution.webm");
+                    // Linking video to author
+                    $link_success = link_video_to_author($db, $author_id, $video_id);
+                    if ($link_success) {
+                        return $video_id;
+                    } else {
+                        throw_error("Linking author to video failed");
+                    }
+                } else {
+                    throw_error("Converting video failed");
+                }
+
+            } else {
+                throw_error("Upload is not video");
+            }
         } else {
-            throw_error("Upload is not video");
+            throw_error("File upload failure");
         }
     } else {
-        throw_error("File upload failure");
+        throw_error("Upload mimetype is not video");
     }
 }
 
