@@ -1,13 +1,18 @@
 <?php
 
-session_start();
-
-//use FFMpeg\FFMpeg;
-
 require_once $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 
-// This uploads the video information to the database
+/**
+ * This uploads the video information to the database
+ * 
+ * @param mysqli $db;
+ * @param string $title;
+ * @param string $description;
+ * @param string $max_resolution;
+ * 
+ * @return array<bool, int>;
+ */
 function upload_video_to_database($db, $title, $description, $max_resolution) {
     $request = $db->prepare("INSERT INTO video_videos (title, description, max_resolution) VALUES (?, ?, ?)");
     $request->bind_param("sss", $title, $description, $max_resolution);
@@ -17,22 +22,34 @@ function upload_video_to_database($db, $title, $description, $max_resolution) {
     //return $db->insert_id;
 }
 
-// This connects the video to the author in a database, allowing multiple video authors
+/**
+ * This connects the video to the author in a database, allowing multiple video authors
+ * 
+ * @param mysqli $db;
+ * @param int $author_id;
+ * @param int $video_id;
+ * 
+ * @return array|null;
+ */
 function link_video_to_author($db, $author_id, $video_id) {
     $request = $db->prepare("INSERT INTO video_videos_authors (author_id, video_id) VALUES (?, ?)");
     $request->bind_param("ii", $author_id, $video_id);
     return $request->execute();
 }
 
-// This is the primarily video uploading process, it does conversion, saving, as well as the functions of the functions used in it.
 /**
+ * This is the primarily video uploading process, it does conversion, saving, as well as the functions of the functions used in it.
+ * 
  * @param bool $action_mode;
  * @param int $author_id;
+ * @param string $title;
+ * @param string $description;
+ * 
+ * @return void|int;
  */
 function upload_media($action_mode, $author_id, $title, $description) {
     $video_file = $_FILES['video-upload'];
     var_dump($video_file, $_FILES, $_POST);
-    //$name = $video_file['name'];
     $temp_name = $video_file['tmp_name'];
     // Checks if it has a video mimetype 
     if (str_starts_with($video_file['type'], 'video/')) {
@@ -56,17 +73,10 @@ function upload_media($action_mode, $author_id, $title, $description) {
                 // Functionally applying action mode, limiting it ot 60 or 30 FPS depedning on if it's selected
                 if ($fps > 30 && !$action_mode) {
                     // https://www.reddit.com/r/AV1/comments/yf62wc/gop_size/
-                    //$video_filters->framerate(30, $seek_time*30);
                     $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(30), 300);
                 } elseif ($fps > 60 && $action_mode) {
                     $video_filters->framerate(new FFMpeg\Coordinate\FrameRate(60), 600);
                 }
-
-                // var_dump of commands given to the terminal by FFMPEG, to see if we can rapidly change as well as set stuff such as ratelimits, crf, and resizing. Prioritize resizing and frame-limits. It gets the filters
-                // var_dump($video->filters->getIterator());
-
-                // I may need to change the priority of the filters, they may over-write eachother if they are the same???
-                // Src: https://github.com/Webbopwork/PHP-FFMpeg-Extended/blob/master/src/FFMpeg/Filters/FiltersCollection.php Look at "add()"
 
                 // For the time being just save one resolution
 
@@ -85,6 +95,7 @@ function upload_media($action_mode, $author_id, $title, $description) {
 
                 // Uploading video to database
                 list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
+                //$pastrami = upload_video_to_database($db, $title, $description, $saved_resolution);
 
                 if ($video_success) {
                     // Saving the video locally in the media database
@@ -111,19 +122,23 @@ function upload_media($action_mode, $author_id, $title, $description) {
     }
 }
 
-// This gets the FFProbe video stream, it allows access to data about the video
 /**
+ * This gets the FFProbe video stream, it allows access to data about the video
+ * 
  * @param string $temp_name;
+ * 
+ * @return \FFMpeg\FFProbe\DataMapping\Stream|null;
  */
 function get_stream($temp_name) {
     $ffprobe = FFMpeg\FFProbe::create();
     return $ffprobe->streams($temp_name)->videos()->first();
 }
 
-
-// This is upposed to loop in order to cover all the resolutions including and lower than the max resolution
-// This has not been impilmented yet
 /**
+ * This is upposed to loop in order to cover all the resolutions including and lower than the max resolution
+ * 
+ * This has not been impilmented yet
+ * 
  * @param string $resolution;
  */
 function resolution_loop($resolution) {
@@ -137,8 +152,9 @@ function resolution_loop($resolution) {
     }
 }
 
-// This gets a text representation of what resolution to use from the height and width
 /**
+ * This gets a text representation of what resolution to use from the height and width
+ * 
  * @param int $height;
  * @param int $width;
  */
@@ -176,7 +192,7 @@ function get_resolution($height, $width) {
 // This based on the resolution adds different filters
 /**
  * @param string $resolution;
- * @param mixed $filters;
+ * @param \FFMpeg\Filters\Video\VideoFilters $filters;
  * @param int $width;
  * @param int $height;
  */
@@ -246,9 +262,13 @@ function resolution_work($resolution, $filters, $width, $height) {
     }
 }
 
-// This converts a text representation of a resolution to a text representation of a lower resolution, used for creating multiple resolution options
+
 /**
+ * This converts a text representation of a resolution to a text representation of a lower resolution, used for creating multiple resolution options
+ * 
  * @param string $resolution;
+ * 
+ * @return string|void
  */
 function lower_resolution($resolution) {
     switch ($resolution) {
@@ -280,8 +300,9 @@ function lower_resolution($resolution) {
     }
 }
 
-// This converts the text representation of a resolution to a text representation that doesn't care for if it's width of height based, making it better for media upload.
 /**
+ * This converts the text representation of a resolution to a text representation that doesn't care for if it's width of height based, making it better for media upload.
+ * 
  * @param string $resolution;
  */
 function save_resolution($resolution) {
@@ -319,17 +340,19 @@ function save_resolution($resolution) {
 // Getting details from the webpage before
 $title = $_POST['title'];
 $description = $_POST['description'];
+
 // Action mode allows up to 60 FPS ina video, while it's normally limited to up to 30 FPS
 $action_mode = $_POST['action-mode'] == 'action mode';
 
 // Checking that the data is there
-$precheck = (!is_null($title) && !is_null($description));
+$precheck = (isset($title) && isset($description));
 
+/** @var null|int */
 $video_id = null;
 
-//session_start();
+session_start();
 $author_id = $_SESSION['id'];
-if ($precheck && !is_null($author_id)) {
+if ($precheck && isset($author_id)) {
     $video_id = upload_media($action_mode, $author_id, $title, $description);
 }
 
