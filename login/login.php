@@ -1,4 +1,12 @@
 <?php
+/**
+ * Checks if your password is the same as the hashed one in the database, if that's the case then it logs you in, otherwise it throws a session error message.
+ * 
+ * @param string $password;
+ * @param array $user_data;
+ * 
+ * @return bool;
+ */
 function check_password($password, $user_data) {
     if (password_verify($password, $user_data['password'])) {
         session_start();
@@ -14,9 +22,6 @@ $username_or_email = $_POST["username-or-email"];
 $password = $_POST["password"];
 
 $success = false;
-
-//require_once __DIR__ . '/functions.php';
-//require_once __DIR__ . '/account_functions.php';
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/account_functions.php';

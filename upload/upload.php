@@ -95,7 +95,6 @@ function upload_media($action_mode, $author_id, $title, $description) {
 
                 // Uploading video to database
                 list($video_success, $video_id) = upload_video_to_database($db, $title, $description, $saved_resolution);
-                //$pastrami = upload_video_to_database($db, $title, $description, $saved_resolution);
 
                 if ($video_success) {
                     // Saving the video locally in the media database
@@ -140,6 +139,8 @@ function get_stream($temp_name) {
  * This has not been impilmented yet
  * 
  * @param string $resolution;
+ * 
+ * @return void;
  */
 function resolution_loop($resolution) {
     while (true) {
@@ -157,6 +158,8 @@ function resolution_loop($resolution) {
  * 
  * @param int $height;
  * @param int $width;
+ * 
+ * @return string;
  */
 function get_resolution($height, $width) {
     // maybe modify later for support for 2:1 instead of 16:9
@@ -189,12 +192,15 @@ function get_resolution($height, $width) {
     }
 }
 
-// This based on the resolution adds different filters
 /**
+ * This based on the resolution adds different filters.
+ * 
  * @param string $resolution;
  * @param \FFMpeg\Filters\Video\VideoFilters $filters;
  * @param int $width;
  * @param int $height;
+ * 
+ * @return void|string;
  */
 function resolution_work($resolution, $filters, $width, $height) {
     switch ($resolution) {
@@ -304,6 +310,8 @@ function lower_resolution($resolution) {
  * This converts the text representation of a resolution to a text representation that doesn't care for if it's width of height based, making it better for media upload.
  * 
  * @param string $resolution;
+ * 
+ * @return string;
  */
 function save_resolution($resolution) {
     switch ($resolution) {

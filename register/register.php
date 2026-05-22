@@ -1,7 +1,5 @@
 <?php
 
-use GrahamCampbell\ResultType\Success;
-
 $displayname = $_POST["displayname"];
 $username = $_POST["username"];
 $email = $_POST["email"];
@@ -19,22 +17,26 @@ if ($displayname == "" || $displayname == null) {
 
 $success = false;
 
-//require_once __DIR__ . '/functions.php';
-//require_once __DIR__ . '/account_functions.php';
-
-/*if (!session_()) {
-    session_start();
-}*/
-
 require_once $_SERVER['DOCUMENT_ROOT'] . '/functions.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/account_functions.php';
 
+/**
+ * Registers account in database and then retrieves if it's a success and the ID assigned to your account.
+ * 
+ * @param mysqli $db;
+ * @param string $username;
+ * @param string $displayname;
+ * @param string $email;
+ * @param string $password;
+ * 
+ * @return array<bool, int>;
+ */
 function register_account($db, $username, $displayname, $email, $password) {
     $request = $db->prepare("INSERT INTO video_users (username, displayname, email, password) VALUES (?, ?, ?, ?)");
-    $request->bind_param("ssss", $username, $displayname, $email, hash_password($password));
+    $hashed_pass = hash_password($password);
+    $request->bind_param("ssss", $username, $displayname, $email, $hashed_pass);
     $request_results = $request->execute();
     return [$request_results, $db->insert_id];
-    //return $db->insert_id;
 }
 
 if ($username && $email && $password) {
@@ -43,7 +45,8 @@ if ($username && $email && $password) {
         $has_email = is_email($email);
         if ($has_email) {
             $db = get_database();
-
+            
+            // Gets user data through both the eMail address and username, if both lack data then the eMail address and username is clear to use.
             $user_data_username = account_data_input($db, false, $username);
             $user_data_email = account_data_input($db, true, $email);
             if (data_exists($user_data_username) || data_exists($user_data_username)) {
@@ -51,7 +54,6 @@ if ($username && $email && $password) {
             } else {
                 list($success, $user_id) = register_account($db, $username, $displayname, $email, $password);
                 if ($success) {
-                    //session_start();
                     $_SESSION['id'] = $user_id;
                     $Success = true;
                 } else {
